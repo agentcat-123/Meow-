@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Calculator</title>
+    <style>
+        :root {
+            --primary: #2a2a2a;
+            --secondary: #3a3a3a;
+            --accent: #ff9500;
+            --text: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(45deg, #1a1a1a, #2a2a2a);
+            color: var(--text);
+        }
+
+        .calculator {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+            width: 400px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #display {
+            width: 100%;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 10px;
+            font-size: 2.5em;
+            color: var(--text);
+            text-align: right;
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            padding: 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+            background: var(--secondary);
+            color: var(--text);
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+        }
+
+        .operator {
+            background: var(--accent);
+        }
+
+        .scientific {
+            background: #4a4a4a;
+        }
+
+        .equals {
+            background: #00c853;
+            grid-column: span 2;
+        }
+
+        .history-panel {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-left: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            width: 250px;
+        }
+
+        .history-item {
+            padding: 10px;
+            margin-bottom: 5px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .theme-switcher {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-switcher">
+        <button onclick="toggleTheme()">🌓</button>
+    </div>
+    
+    <div class="calculator">
+        <input type="text" id="display" readonly>
+        <div class="buttons">
+            <!-- Scientific Functions -->
+            <button class="scientific" onclick="addFunction('sqrt(')">√</button>
+            <button class="scientific" onclick="addFunction('pow(')">x^y</button>
+            <button class="scientific" onclick="addFunction('sin(')">sin</button>
+            <button class="scientific" onclick="addFunction('cos(')">cos</button>
+            <button class="scientific" onclick="addFunction('tan(')">tan</button>
+            
+            <!-- Standard Buttons -->
+            <button onclick="clearDisplay()">C</button>
+            <button onclick="backspace()">⌫</button>
+            <button class="operator" onclick="addOperator('%')">%</button>
+            <button class="operator" onclick="addOperator('/')">/</button>
+            <button onclick="addNumber('7')">7</button>
+            <button onclick="addNumber('8')">8</button>
+            <button onclick="addNumber('9')">9</button>
+            <button class="operator" onclick="addOperator('*')">×</button>
+            <button onclick="addNumber('4')">4</button>
+            <button onclick="addNumber('5')">5</button>
+            <button onclick="addNumber('6')">6</button>
+            <button class="operator" onclick="addOperator('-')">-</button>
+            <button onclick="addNumber('1')">1</button>
+            <button onclick="addNumber('2')">2</button>
+            <button onclick="addNumber('3')">3</button>
+            <button class="operator" onclick="addOperator('+')">+</button>
+            <button onclick="addNumber('0')">0</button>
+            <button onclick="addNumber('.')">.</button>
+            <button onclick="addNumber('00')">00</button>
+            <button class="equals" onclick="calculate()">=</button>
+        </div>
+    </div>
+
+    <div class="history-panel">
+        <h3>History</h3>
+        <div id="history"></div>
+    </div>
+
+    <script>
+        let display = document.getElementById('display');
+        let history = [];
+        let isScientific = false;
+
+        // Main functions
+        function addNumber(num) {
+            display.value += num;
+        }
+
+        function addOperator(op) {
+            display.value += ` ${op} `;
+        }
+
+        function addFunction(fn) {
+            display.value += `${fn}`;
+        }
+
+        function clearDisplay() {
+            display.value = '';
+        }
+
+        function backspace() {
+            display.value = display.value.slice(0, -1);
+        }
+
+        function calculate() {
+            try {
+                let expression = display.value
+                    .replace(/sin/g, 'Math.sin')
+                    .replace(/cos/g, 'Math.cos')
+                    .replace(/tan/g, 'Math.tan')
+                    .replace(/sqrt/g, 'Math.sqrt')
+                    .replace(/pow/g, 'Math.pow')
+                    .replace(/%/g, '/100');
+
+                let result = eval(expression);
+                history.unshift(`${display.value} = ${result}`);
+                updateHistory();
+                display.value = result;
+            } catch (error) {
+                display.value = 'Error';
+                setTimeout(clearDisplay, 1000);
+            }
+        }
+
+        // Additional features
+        function updateHistory() {
+            const historyDiv = document.getElementById('history');
+            historyDiv.innerHTML = history.slice(0, 10).map(item => 
+                `<div class="history-item" onclick="insertHistory('${item}')">${item}</div>`
+            ).join('');
+        }
+
+        function insertHistory(item) {
+            display.value = item.split(' = ')[0];
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9') addNumber(e.key);
+            if (e.key === '.') addNumber('.');
+            if ('+-*/'.includes(e.key)) addOperator(e.key);
+            if (e.key === 'Enter') calculate();
+            if (e.key === 'Escape') clearDisplay();
+            if (e.key === 'Backspace') backspace();
+        });
+    </script>
+</body>
+</html>
